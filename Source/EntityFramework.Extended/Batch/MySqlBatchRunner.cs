@@ -12,6 +12,7 @@ using EntityFramework.Extensions;
 using EntityFramework.Mapping;
 using EntityFramework.Reflection;
 using System.Threading.Tasks;
+using System.Data.Entity.Infrastructure.Interception;
 
 namespace EntityFramework.Batch
 {
@@ -121,13 +122,11 @@ namespace EntityFramework.Batch
 
                 deleteCommand.CommandText = sqlBuilder.ToString().Replace("[", "").Replace("]", "");
 
-#if NET45
-                int result = async
-                    ? await deleteCommand.ExecuteNonQueryAsync().ConfigureAwait(false)
-                    : deleteCommand.ExecuteNonQuery();
-#else
-                int result = deleteCommand.ExecuteNonQuery();
-#endif
+
+                int result = DbInterception.Dispatch.Command.NonQuery(deleteCommand, new DbCommandInterceptionContext());
+                // int result = updateCommand.ExecuteNonQuery();
+
+
 
                 // only commit if created transaction
                 if (ownTransaction)
@@ -368,13 +367,7 @@ namespace EntityFramework.Batch
 
                 updateCommand.CommandText = sqlBuilder.ToString().Replace("[", "").Replace("]", "");
 
-#if NET45
-                int result = async
-                    ? await updateCommand.ExecuteNonQueryAsync().ConfigureAwait(false)
-                    : updateCommand.ExecuteNonQuery();
-#else
-                int result = updateCommand.ExecuteNonQuery();
-#endif
+                int result = DbInterception.Dispatch.Command.NonQuery(updateCommand, new DbCommandInterceptionContext());
 
                 // only commit if created transaction
                 if (ownTransaction)
